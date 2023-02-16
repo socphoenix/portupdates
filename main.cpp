@@ -75,12 +75,12 @@ int main (int argc, char** argv) {
     while ( getline (applist,appline) )
     {
       ifstream UPDATING ("/usr/ports/UPDATING");
-      while ( getline (UPDATING,line) )
-      {
+      if(UPDATING.is_open()) {
+        while ( getline (UPDATING,line) ) {
        //check date, make sure it's actually a date, then if less than cutoff break.
-      if(regex_search(line, regex("[0-9]:")) && line.length() == 9) {
-         if(stoi(line) < stoi(curTime)) {
-           break;
+        if(regex_search(line, regex("[0-9]:")) && line.length() == 9) {
+          if(stoi(line) < stoi(curTime)) {
+            break;
         }
       }
       //check if match, then check if "affects" in line. then show found.
@@ -89,13 +89,22 @@ int main (int argc, char** argv) {
       }
     }
     UPDATING.close();
+      }
+
+      else {
+        cout << "Could not open /usr/ports/UPDATING. please check your ports files and try again.";
+        return 1;
+      }
   }
+
     applist.close();
     system("rm /tmp/applist.txt");
   }
 
-  else cout << "Unable to open file";
-
+  else {
+    cout << "Unable to create pkg list. please check your installation of pkg.";
+    return 1;
+  }
   //add ability to use portmaster/pkg/whatever inline.
   cout << "Would you like to continue upgrading? [y/n]: ";
   cin >> cont;
