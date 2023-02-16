@@ -51,15 +51,38 @@ DEALINGS IN THE SOFTWARE.
 #include <string>
 #include <regex>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <stdlib.h>
 using namespace boost::gregorian;
 using namespace std;
 
 int main (int argc, char** argv) {
+  string homeDir = getenv("HOME");
+  homeDir = homeDir + "/.config/portupdates.txt";
+  string curTime;
+  //check for arguments, if none passed try to look for last program run. else default to 7 days prior.
   if(argc < 2) {
-    cout << "Proper format is 'test 1' where 1 equals the number of days back you wish to search \n";
+    ifstream lastUsed (homeDir);
+    if (lastUsed.is_open()) {
+      getline (lastUsed, curTime);
+      lastUsed.close();
+    }
+    else {
+      date d = day_clock::universal_day();
+      d -= days(7);
+      curTime = to_iso_string(d);
+    }
+  }
+  else if(argc == 2) {
+    int cutOff = stoi(argv[1]);
+    date d = day_clock::universal_day();
+    d -= days(cutOff);
+    curTime = to_iso_string(d);
+  }
+  else {
+    cout << "Too many options, only tell portupdates how many days back you wish to go with no additional arguments \n";
     return 1;
   }
-  int cutOff = stoi(argv[1]);
+
   string line;
   string appline;
   string cont;
@@ -67,11 +90,7 @@ int main (int argc, char** argv) {
   ifstream applist ("/tmp/applist.txt");
   if (applist.is_open())
   {
-    //use boost
-    string curTime;
-    date d = day_clock::universal_day();
-    d -= days(cutOff);
-    curTime = to_iso_string(d);
+
     while ( getline (applist,appline) )
     {
       ifstream UPDATING ("/usr/ports/UPDATING");
@@ -109,13 +128,19 @@ int main (int argc, char** argv) {
   cout << "Would you like to continue upgrading? [y/n]: ";
   cin >> cont;
   if(cont == "y" or cont == "Y") {
-    cout << "Should portmaster use packages if available? [Y/n]";
-    cont = "y";
+    cout << "Should portmaster use packages if available? [y/n]: ";
     cin >> cont;
     if(cont == "y" or cont == "Y") {
       system("portmaster -aP");
     }
     else system("portmaster -a");
+  }
+
+  //save config files with last used date. Program defaults to checking since the last time it was run.
+  ofstream lastUsed (homeDir);
+  if(lastUsed.is_open()) {
+    lastUsed << curTime;
+    lastUsed.close();
   }
 
   return 0;
