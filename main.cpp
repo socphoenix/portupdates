@@ -56,6 +56,8 @@ using namespace boost::gregorian;
 using namespace std;
 
 int main (int argc, char** argv) {
+  //bool i to check for additional lines of UPDATING issues
+  bool i = 0;
   string homeDir = getenv("HOME");
   homeDir = homeDir + "/.config/portupdates.txt";
   string curTime;
@@ -64,6 +66,12 @@ int main (int argc, char** argv) {
     ifstream lastUsed (homeDir);
     if (lastUsed.is_open()) {
       getline (lastUsed, curTime);
+      //if blank config default to 7 days
+      if(curTime == "") {
+        date d = day_clock::universal_day();
+        d -= days(7);
+        curTime = to_iso_string(d);
+      }
       lastUsed.close();
     }
     else {
@@ -96,15 +104,21 @@ int main (int argc, char** argv) {
       ifstream UPDATING ("/usr/ports/UPDATING");
       if(UPDATING.is_open()) {
         while ( getline (UPDATING,line) ) {
+          //loop to add rest of data from UPDATING on issues
+          if(i == 1 && line.length() != 9) {
+            cout << line << "\n";
+          }
        //check date, make sure it's actually a date, then if less than cutoff break.
-        if(regex_search(line, regex("[0-9]:")) && line.length() == 9) {
-          if(stoi(line) < stoi(curTime)) {
-            break;
+          else if(regex_search(line, regex("[0-9]:")) && line.length() == 9) {
+            i = 0;
+            if(stoi(line) < stoi(curTime)) {
+              break;
         }
       }
       //check if match, then check if "affects" in line. then show found.
       else if(regex_search(line, regex(appline)) && regex_search(line, regex("AFFECTS"))) {
         cout << "FOUND " << appline << "\n" << line << "\n";
+        i = 1;
       }
     }
     UPDATING.close();
@@ -137,10 +151,13 @@ int main (int argc, char** argv) {
   }
 
   //save config files with last used date. Program defaults to checking since the last time it was run.
-  ofstream lastUsed (homeDir);
-  if(lastUsed.is_open()) {
-    lastUsed << curTime;
-    lastUsed.close();
+  //if arguments were presented, don't touch config
+  if(argc < 2) {
+    ofstream lastUsed (homeDir);
+    if(lastUsed.is_open()) {
+      lastUsed << curTime;
+      lastUsed.close();
+  }
   }
 
   return 0;
