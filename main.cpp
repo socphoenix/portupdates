@@ -92,7 +92,7 @@ int main (int argc, char** argv) {
       }
 
       else {
-        cout << "Could not open /usr/ports/UPDATING. please check your ports files and try again.";
+        cout << "Could not open /usr/ports/UPDATING. Please check your ports files and try again.";
         return 1;
       }
   }
@@ -108,8 +108,14 @@ int main (int argc, char** argv) {
   //add ability to use portmaster/pkg/whatever inline.
   cout << "Would you like to continue upgrading? [y/n]: ";
   cin >> cont;
-  if(cont == "y") {
-    system("portmaster -a");
+  if(cont == "y" or cont == "Y") {
+    cout << "Should portmaster use packages if available? [Y/n]";
+    cont = "y";
+    cin >> cont;
+    if(cont == "y" or cont == "Y") {
+      system("portmaster -aP");
+    }
+    else system("portmaster -a");
   }
 
   return 0;
