@@ -1,2 +1,2 @@
 default:
-	g++ -o portupdates main.cpp
+	cc -o portupdates main.cpp
